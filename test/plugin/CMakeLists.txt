@@ -5,7 +5,7 @@ add_custom_command(
       ${CMAKE_CURRENT_BINARY_DIR}/PluginMatMulImpl.cpp
 )
 
-if (MNN_BUILD_SHARED_LIBS)
+if(MNN_BUILD_SHARED_LIBS)
   add_library(plugin_matmul SHARED ${CMAKE_CURRENT_BINARY_DIR}/PluginMatMulImpl.cpp)
 else()
   add_library(plugin_matmul STATIC ${CMAKE_CURRENT_BINARY_DIR}/PluginMatMulImpl.cpp)

@@ -3,43 +3,63 @@ option(MNN_CODEGEN_C "Build C source backend for codegen." OFF)
 option(MNN_CODEGEN_OPENCL "Build OpenCL source backend for codegen." OFF)
 option(MNN_CODEGEN_JIT "Build jit for codegen." OFF)
 
+file(GLOB CODEGEN_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/*.*")
+file(GLOB CPU_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/cpu/*.*")
+file(GLOB JIT_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/jit/*.*")
 
-file(GLOB CODEGEN_HEADER "${CMAKE_CURRENT_LIST_DIR}/*.*")
-file(GLOB CPU_SRCS "${CMAKE_CURRENT_LIST_DIR}/cpu/*.*")
-file(GLOB JIT_SRCS "${CMAKE_CURRENT_LIST_DIR}/jit/*.*")
-list(APPEND MNN_CODEGEN_SRCS ${CODEGEN_HEADER})
-list(APPEND MNN_CODEGEN_SRCS ${JIT_SRCS})
+add_library(MNNCodegen
+    ${CODEGEN_HEADER}
+    ${JIT_SRCS}
+)
+
+set_target_properties(MNNCodegen
+PROPERTIES
+    CXX_STANDARD 14
+)
+
+target_include_directories(MNNCodegen
+PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
+
+target_compile_definitions(MNNCodegen
+PUBLIC
+    MNN_BUILD_CODEGEN
+)
+
+target_link_libraries(MNNCodegen
+PUBLIC
+    MNNCore
+)
 
 if(MNN_CODEGEN_OPENCL)
-    add_definitions(-DMNN_CODEGEN_OPENCL)
-    file(GLOB OPENCL_SRCS "${CMAKE_CURRENT_LIST_DIR}/opencl/*.*")
-    list(APPEND MNN_CODEGEN_SRCS ${OPENCL_SRCS})
+    target_compile_definitions(MNNCodegen PUBLIC MNN_CODEGEN_OPENCL)
+    file(GLOB OPENCL_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/opencl/*.*")
+    target_sources(MNNCodegen PRIVATE ${OPENCL_SRCS})
 endif()
 
 if(MNN_CODEGEN_C)
-    add_definitions(-DMNN_CODEGEN_CPU)
-    add_definitions(-DMNN_CODEGEN_C)
-    file(GLOB C_SRCS "${CMAKE_CURRENT_LIST_DIR}/cpu/c/*.*")
-    list(APPEND MNN_CODEGEN_SRCS ${CPU_SRCS})
-    list(APPEND MNN_CODEGEN_SRCS ${C_SRCS})
+    target_compile_definitions(MNNCodegen PUBLIC MNN_CODEGEN_CPU MNN_CODEGEN_C)
+    file(GLOB C_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/cpu/c/*.*")
+    target_sources(MNNCodegen PRIVATE ${CPU_SRCS} ${C_SRCS})
 endif()
 
 if(MNN_CODEGEN_LLVM)
-    add_definitions(-DMNN_CODEGEN_CPU)
-    add_definitions(-DMNN_CODEGEN_LLVM)
-    file(GLOB LLVM_SRCS "${CMAKE_CURRENT_LIST_DIR}/cpu/llvm/*.*")
-    list(APPEND MNN_CODEGEN_SRCS ${CPU_SRCS})
-    list(APPEND MNN_CODEGEN_SRCS ${LLVM_SRCS})
+    target_compile_definitions(MNNCodegen PUBLIC MNN_CODEGEN_CPU MNN_CODEGEN_LLVM)
+    file(GLOB LLVM_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/cpu/llvm/*.*")
+    target_sources(MNNCodegen PRIVATE ${CPU_SRCS} ${LLVM_SRCS})
     # add llvm libs
     find_package(LLVM REQUIRED CONFIG)
     message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
     message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-    include_directories(${LLVM_INCLUDE_DIRS})
-    add_definitions(${LLVM_DEFINITIONS})
+    target_include_directories(MNN PUBLIC ${LLVM_INCLUDE_DIRS})
+    target_compile_definitions(MNN PUBLIC ${LLVM_DEFINITIONS})
+
     llvm_map_components_to_libnames(llvm_libs core bitwriter OrcJIT Support nativecodegen native CodeGen)
-    list(APPEND MNN_EXTRA_DEPENDS ${llvm_libs})
+    target_link_libraries(MNN PUBLIC ${llvm_libs})
 endif()
 
-add_library(MNNCodegen OBJECT ${MNN_CODEGEN_SRCS})
-set_property(TARGET MNNCodegen PROPERTY CXX_STANDARD 14)
-list(APPEND MNN_OBJECTS_TO_LINK $<TARGET_OBJECTS:MNNCodegen>)
+install(TARGETS MNNCodegen
+    EXPORT MNNConfig
+    RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib
+)

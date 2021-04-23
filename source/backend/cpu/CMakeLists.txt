@@ -1,34 +1,46 @@
 # CPU
 option(MNN_SUPPORT_BF16 "Enable MNN's bf16 op" OFF)
-FILE(GLOB MNN_CPU_SRC ${CMAKE_CURRENT_LIST_DIR}/* ${CMAKE_CURRENT_LIST_DIR}/compute/*)
-add_library(MNNCPU OBJECT ${MNN_CPU_SRC})
-if (MNN_SUPPORT_BF16)
-    include(${CMAKE_CURRENT_LIST_DIR}/bf16/CMakeLists.txt)
-    list(APPEND MNN_TARGETS MNN_BF16)
-    list(APPEND MNN_OBJECTS_TO_LINK $<TARGET_OBJECTS:MNN_BF16>)
-    add_definitions(-DMNN_SUPPORT_BF16) # MNNCPU and MNNARM32 need to know flag MNN_SUPPORT_BF16
+
+FILE(GLOB MNN_CPU_SRC ${CMAKE_CURRENT_SOURCE_DIR}/* ${CMAKE_CURRENT_SOURCE_DIR}/compute/*)
+add_library(MNNCPU ${MNN_CPU_SRC})
+
+target_link_libraries(MNNCPU
+PRIVATE
+    MNNCore
+)
+
+if(MNN_SUPPORT_BF16)
+    add_subdirectory(bf16)
+    target_compile_definitions(MNN_BF16 PUBLIC MNN_SUPPORT_BF16)
+    target_link_libraries(MNNCPU PUBLIC MNN_BF16)
+    # MNNCPU and MNNARM32 need to know flag MNN_SUPPORT_BF16
 endif()
-list(APPEND MNN_OBJECTS_TO_LINK $<TARGET_OBJECTS:MNNCPU>)
-list(APPEND MNN_TARGETS MNNCPU)
 option(MNN_SSE_USE_FP16_INSTEAD "Use fp16 instead of bf16 for x86op" OFF)
 
 # X86_64 AVX/SSE
-if (MNN_USE_SSE)
-    include(${CMAKE_CURRENT_LIST_DIR}/x86_x64/CMakeLists.txt)
+if(MNN_USE_SSE)
+    add_subdirectory(x86_x64)
+    if(TARGET MNNAVX512)
+        target_link_libraries(MNNCPU PUBLIC MNNAVX512)
+    endif()
+    if(TARGET MNNSSE)
+        target_link_libraries(MNNCPU PUBLIC MNNX8664 MNNAVX MNNAVXFMA MNNSSE)
+    endif()
 endif()
 
 # AArch32/64 Assemblies
-include(${CMAKE_CURRENT_LIST_DIR}/arm/CMakeLists.txt)
+add_subdirectory(arm)
 
-IF(NOT DEFINED IOS_ARCH)
+if(NOT DEFINED IOS_ARCH)
     set(IOS_ARCH "")
-ENDIF()
+endif()
 
 # ARM82 Assemblies
-IF(MNN_ARM82)
-    target_compile_options(MNNCPU PRIVATE -DENABLE_ARMV82)
-    include(${CMAKE_CURRENT_LIST_DIR}/../arm82/CMakeLists.txt)
-    list(APPEND MNN_TARGETS MNN_Arm82)
-    list(APPEND MNN_OBJECTS_TO_LINK $<TARGET_OBJECTS:MNN_Arm82>)
-ENDIF()
+if(MNN_ARM82)
+    target_compile_definitions(MNNCPU PRIVATE ENABLE_ARMV82)
+endif()
 
+install(TARGETS MNNCPU
+    EXPORT MNNConfig
+    RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib
+)
