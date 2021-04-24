@@ -240,7 +240,7 @@ FILE(GLOB MNN_Math_SRC ${CMAKE_CURRENT_LIST_DIR}/source/math/*)
 FILE(GLOB MNN_Transform_SRC ${CMAKE_CURRENT_LIST_DIR}/source/shape/* ${CMAKE_CURRENT_LIST_DIR}/source/geometry/*)
 FILE(GLOB MNN_Utils_SRC ${CMAKE_CURRENT_LIST_DIR}/source/utils/*)
 
-add_library(MNNCore
+add_library(MNNCore STATIC
   ${MNN_Core_SRC} ${MNN_CV_SRC} ${MNN_Math_SRC} ${MNN_Transform_SRC} ${MNN_Utils_SRC}
 )
 
@@ -255,6 +255,9 @@ target_link_libraries(MNNCore
 PUBLIC
   flatbuffers::flatbuffers
 )
+if(ANDROID)
+  target_link_libraries(MNNCore PUBLIC log)
+endif()
 
 if(MNN_BUILD_MINI)
     target_compile_definitions(MNNCore PRIVATE MNN_BUILD_MINI)
@@ -269,10 +272,10 @@ endif()
 
 # target: MNNCPU, MNN_BF16 ...
 add_subdirectory(source/backend/cpu)
+
+# target: MNN_Arm82
 if(MNN_ARM82)
-    add_subdirectory(source/arm82)
-    target_compile_definitions(MNNCPU PRIVATE ENABLE_ARMV82)
-    target_link_libraries(MNN PUBLIC MNN_Arm82)
+    add_subdirectory(source/backend/arm82)
 endif()
 
 list(APPEND MNN_PUB_HDRS
@@ -383,17 +386,17 @@ add_subdirectory(express) # MNN_Express
 target_link_libraries(MNN PUBLIC MNN_Express)
 
 find_package(RapidJSON CONFIG REQUIRED)
-find_path(STB_INCLUDE_DIRS "stb.h")
 # include_directories(
 #                     # ${CMAKE_CURRENT_LIST_DIR}/tools/
 #                     ${RAPIDJSON_INCLUDE_DIRS}
-#                     ${STB_INCLUDE_DIRS}
 #                   )
-
 
 # Train
 if(MNN_BUILD_TRAIN)
+  find_path(STB_INCLUDE_DIRS "stb.h")
   add_subdirectory(tools/train) # MNNTrain
+  target_include_directories(MNNTrain PRIVATE ${STB_INCLUDE_DIRS})
+  target_compile_definitions(MNNTrain PRIVATE STB_IMAGE_STATIC STB_IMAGE_IMPLEMENTATION)
 endif()
 
 #CodeGen
@@ -455,8 +458,6 @@ if(APPLE)
 endif()
 target_link_libraries(MNN PUBLIC MNNCore MNNCPU)
 
-add_subdirectory(tools/converter)
-
 if(CMAKE_SYSTEM_NAME MATCHES "^Linux")
   # Using -pthread, needed by thread-safe implemention of glibc, is better than only using -lpthread
   # https://stackoverflow.com/questions/23250863/difference-between-pthread-and-lpthread-while-compiling
@@ -467,25 +468,27 @@ else()
   # ...
 endif()
 
-
-if(MNN_BUILD_DEMO)
-  add_subdirectory(demo/exec/CMakeLists.txt)
+if(MNN_BUILD_CONVERTER)
+  add_subdirectory(tools/converter)
 endif()
-if(MNN_BUILD_TOOLS)
-  add_subdirectory(tools/cpp/CMakeLists.txt)
-endif()
-if(MNN_BUILD_TEST)
-  add_subdirectory(test/CMakeLists.txt)
-endif()
-if(MNN_BUILD_BENCHMARK)
-  add_subdirectory(benchmark/CMakeLists.txt)
-endif()
-if(MNN_BUILD_QUANTOOLS)
-  add_subdirectory(tools/quantization/CMakeLists.txt)
-endif()
-if(MNN_EVALUATION)
-  add_subdirectory(tools/evaluation/CMakeLists.txt)
-endif()
+# if(MNN_BUILD_DEMO)
+#   add_subdirectory(demo/exec/CMakeLists.txt)
+# endif()
+# if(MNN_BUILD_TOOLS)
+#   add_subdirectory(tools/cpp/CMakeLists.txt)
+# endif()
+# if(MNN_BUILD_TEST)
+#   add_subdirectory(test/CMakeLists.txt)
+# endif()
+# if(MNN_BUILD_BENCHMARK)
+#   add_subdirectory(benchmark/CMakeLists.txt)
+# endif()
+# if(MNN_BUILD_QUANTOOLS)
+#   add_subdirectory(tools/quantization/CMakeLists.txt)
+# endif()
+# if(MNN_EVALUATION)
+#   add_subdirectory(tools/evaluation/CMakeLists.txt)
+# endif()
 
 # Install
 include(CMakePackageConfigHelpers)
@@ -509,9 +512,8 @@ install(TARGETS MNN MNNCore
     PUBLIC_HEADER DESTINATION include/MNN
     FRAMEWORK DESTINATION Library/Frameworks/
 )
-
 install(EXPORT MNNConfig
-      DESTINATION lib/cmake/MNN
+    DESTINATION lib/cmake/MNN
 )
 
 if(APPLE)
@@ -521,9 +523,4 @@ if(APPLE)
   FOREACH(HDR ${MNN_PUB_HDRS})
     SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/ )
   ENDFOREACH()
-  if(MNN_METAL)
-    INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/mnn.metallib DESTINATION bin)
-    SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/mnn.metallib PROPERTIES MACOSX_PACKAGE_LOCATION Resources/)
-  endif()
 endif()
-

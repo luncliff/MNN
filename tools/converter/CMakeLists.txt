@@ -1,80 +1,93 @@
-if(MNN_BUILD_CONVERTER)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_ORIGIN})
-  set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS_ORIGIN})
-  SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../)
-  option(TF_CONVERT_ORIGIN "Fall Back to Origin Model Converter" OFF)
-  option(TFMODEL_OPTIMIZE "Enable tensorflow model optimizer" OFF)
-  option(MNN_BUILD_TORCHSCRIPT "Build Converter support TorchScript." OFF)
-  if(MNN_PORTABLE_BUILD)
-    SET(Protobuf_USE_STATIC_LIBS ON)
-  endif()
-  if(MSVC)
-    set(Protobuf_SRC_ROOT_FOLDER $ENV{Protobuf_SRC_ROOT_FOLDER})
-  endif()
-  find_package(Protobuf REQUIRED)
-  if(${CMAKE_VERSION} VERSION_LESS "3.6.0")
-      set(Protobuf_LIBRARIES ${PROTOBUF_LIBRARIES})
-      set(Protobuf_INCLUDE_DIRS ${PROTOBUF_INCLUDE_DIRS})
-  endif()
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/include/)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/source/tflite/schema/)
-  include_directories(${Protobuf_INCLUDE_DIRS})
-  SET(MNN_CONVERTER_BACKENDS_TARGETS "")
-  SET(MNN_CONVERTER_BACKENDS_OBJECTS "")
-  SET(MNN_CONVERTER_TS_LIBS "")
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
-  include_directories(${CMAKE_CURRENT_LIST_DIR}/source/tflite/schema)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR})
-  include(${CMAKE_CURRENT_LIST_DIR}/source/compression/CMakeLists.txt)
-  include(${CMAKE_CURRENT_LIST_DIR}/source/tensorflow/CMakeLists.txt)
-  include(${CMAKE_CURRENT_LIST_DIR}/source/onnx/CMakeLists.txt)
-  include(${CMAKE_CURRENT_LIST_DIR}/source/caffe/CMakeLists.txt)
-  include(${CMAKE_CURRENT_LIST_DIR}/source/MNN/CMakeLists.txt)
-  include(${CMAKE_CURRENT_LIST_DIR}/source/optimizer/CMakeLists.txt)
-  include(${CMAKE_CURRENT_LIST_DIR}/source/tflite/CMakeLists.txt)
-  if(MNN_BUILD_TORCHSCRIPT)
-    add_definitions(-DMNN_BUILD_TORCHSCRIPT)
-    include(${CMAKE_CURRENT_LIST_DIR}/source/torchscript/CMakeLists.txt)
-  endif()
+option(TF_CONVERT_ORIGIN "Fall Back to Origin Model Converter" OFF)
+option(TFMODEL_OPTIMIZE "Enable tensorflow model optimizer" OFF)
+option(MNN_BUILD_TORCHSCRIPT "Build Converter support TorchScript." OFF)
 
-  file(GLOB COMMON_SRC ${CMAKE_CURRENT_LIST_DIR}/source/common/*.cpp)
-  add_executable(MNNDump2Json ${CMAKE_CURRENT_LIST_DIR}/source/MNNDump2Json.cpp)
-  add_executable(MNNConvert
-    ${CMAKE_CURRENT_LIST_DIR}/source/MNNConverter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/source/cli.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/source/config.cpp
+find_package(Protobuf CONFIG REQUIRED)
+
+file(GLOB COMMON_SRC ${CMAKE_CURRENT_SOURCE_DIR}/source/common/*.cpp)
+
+add_library(MNNConvertDeps STATIC ${COMMON_SRC} ${MNN_CONVERTER_BACKENDS_OBJECTS})
+
+target_include_directories(MNNConvertDeps
+PUBLIC
+  ${PROJECT_SOURCE_DIR}/tools/
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/tflite/schema/
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(MNNConvertDeps
+PUBLIC
+  protobuf::libprotobuf
+  MNNCore ${MNN_CONVERTER_TS_LIBS}
+)
+
+if(NOT MSVC)
+  target_compile_options(MNNConvertDeps
+  PUBLIC
+    -fexceptions
   )
-  if(MNN_BUILD_SHARED_LIBS)
-    add_library(MNNConvertDeps SHARED ${COMMON_SRC} ${MNN_CONVERTER_BACKENDS_OBJECTS} ${CMAKE_CURRENT_LIST_DIR}/../../3rd_party/flatbuffers/src/util.cpp $<TARGET_OBJECTS:MNNUtils>)
-    add_dependencies(MNNConvertDeps MNN)
-  else()
-    add_library(MNNConvertDeps STATIC ${COMMON_SRC} ${MNN_CONVERTER_BACKENDS_OBJECTS} ${CMAKE_CURRENT_LIST_DIR}/../../3rd_party/flatbuffers/src/util.cpp)
-  endif()
-  
-  
-  if(NOT MNN_BUILD_SHARED_LIBS)
-    target_link_libraries(MNNConvertDeps PUBLIC ${Protobuf_LIBRARIES})
-    if(APPLE)
-        target_link_libraries(MNNConvert -Wl,-all_load MNNConvertDeps ${MNN_DEPS} -Wl,-noall_load)
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        # See also /path/to/MNN/CMakeLists.txt:481 when you are confused with -lpthread here.
-        target_link_libraries(MNNConvert -Wl,--whole-archive MNNConvertDeps ${MNN_DEPS} -lpthread -Wl,--no-whole-archive)
-    elseif(MSVC)
-        target_link_libraries(MNNConvert MNNConvertDeps)
-        target_link_options(MNNConvert PRIVATE /WHOLEARCHIVE:$<TARGET_FILE:MNNConvertDeps>)
-        foreach (DEPEND ${MNN_DEPS})
-            target_link_libraries(MNNConvert ${DEPEND})
-            target_link_options(MNNConvert PRIVATE /WHOLEARCHIVE:$<TARGET_FILE:${DEPEND}>)
-        endforeach ()
-    else()
-        target_link_libraries(MNNConvert MNNConvertDeps)
-    endif()
-  else()
-    target_link_libraries(MNNConvertDeps PUBLIC ${MNN_DEPS} ${Protobuf_LIBRARIES} ${MNN_CONVERTER_TS_LIBS})
-    add_executable(TestConvertResult ${CMAKE_CURRENT_LIST_DIR}/source/TestConvertResult.cpp)
-    target_link_libraries(TestConvertResult MNNConvertDeps)
-    add_executable(TestPassManager ${CMAKE_CURRENT_LIST_DIR}/source/TestPassManager.cpp)
-    target_link_libraries(TestPassManager MNNConvertDeps)
-    target_link_libraries(MNNConvert MNNConvertDeps)
-  endif()
 endif()
+
+SET(MNN_CONVERTER_BACKENDS_TARGETS "")
+SET(MNN_CONVERTER_BACKENDS_OBJECTS "")
+SET(MNN_CONVERTER_TS_LIBS "")
+
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/compression/CMakeLists.txt)
+file(GLOB CALIBRATION_SRC ${CMAKE_CURRENT_SOURCE_DIR}/source/compression/*.cpp)
+protobuf_generate_cpp(MNN_COMPRESSION_PROTO_SRCS MNN_COMPRESSION_PROTO_HDRS
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/compression/MNN_compression.proto
+)
+
+message(WARNING "? ${MNN_COMPRESSION_PROTO_HDRS} ${CMAKE_CURRENT_BINARY_DIR}")
+add_library(MNNCompress STATIC
+  ${CALIBRATION_SRC}
+  ${MNN_COMPRESSION_PROTO_SRCS} ${MNN_COMPRESSION_PROTO_HDRS}
+)
+
+target_include_directories(MNNCompress
+PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/compression
+  ${CMAKE_CURRENT_BINARY_DIR}/source/compression
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# todo
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/tensorflow/CMakeLists.txt)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/onnx/CMakeLists.txt)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/caffe/CMakeLists.txt)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/MNN/CMakeLists.txt)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/optimizer/CMakeLists.txt)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/source/tflite/CMakeLists.txt)
+
+if(MNN_BUILD_TORCHSCRIPT)
+  target_compile_definitions(MNNConvertDeps PUBLIC MNN_BUILD_TORCHSCRIPT)
+  # include(${CMAKE_CURRENT_SOURCE_DIR}/source/torchscript/CMakeLists.txt)
+endif()
+
+
+add_executable(MNNDump2Json
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/MNNDump2Json.cpp
+)
+target_link_libraries(MNNDump2Json PRIVATE MNNCore)
+
+add_executable(MNNConvert
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/MNNConverter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/cli.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/config.cpp
+)
+target_link_libraries(MNNConvert PRIVATE MNNConvertDeps MNNCompress)
+
+add_executable(TestConvertResult
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/TestConvertResult.cpp
+)
+target_link_libraries(TestConvertResult PRIVATE MNNConvertDeps)
+
+add_executable(TestPassManager
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/TestPassManager.cpp
+)
+target_link_libraries(TestPassManager PRIVATE MNNConvertDeps)
+
+install(TARGETS MNNDump2Json MNNConvert
+    RUNTIME DESTINATION bin
+)

@@ -12,27 +12,30 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(X86_64)|(x64)|(X64)|(amd64)|(AMD64)
         FILE(GLOB MNN_AVXFMA_SRC ${CMAKE_CURRENT_SOURCE_DIR}/avxfma/*)
         if(MNN_AVX512)
             FILE(GLOB MNN_AVX512_SRC ${CMAKE_CURRENT_SOURCE_DIR}/avx512/*)
-            add_library(MNNAVX512  ${MNN_AVX512_SRC})
-            target_compile_options(MNNAVX512 PRIVATE -m64 -mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma -DMNN_X86_USE_ASM -mavx512vnni)
-            install(TARGETS MNNAVX512 
+            add_library(MNNAVX512 STATIC ${MNN_AVX512_SRC})
+            target_compile_options(MNNAVX512 PRIVATE -m64 -mavx512f -mavx512dq -mavx512vl -mavx512bw -mfma -mavx512vnni)
+            target_compile_definitions(MNNAVX512 PRIVATE MNN_X86_USE_ASM)
+            target_link_libraries(MNNAVX512 PUBLIC MNNCore)
+            install(TARGETS MNNAVX512
+                EXPORT MNNConfig
                 RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib
             )
         endif()
     endif()
     FILE(GLOB MNN_SSE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sse/*)
-    add_library(MNNX8664 ${MNN_X8664_SRC})
+    add_library(MNNX8664 STATIC ${MNN_X8664_SRC})
     target_link_libraries(MNNX8664 PRIVATE MNNCore)
     target_compile_definitions(MNNX8664 PUBLIC MNN_USE_SSE)
 
-    add_library(MNNAVX ${MNN_AVX_SRC})
+    add_library(MNNAVX STATIC ${MNN_AVX_SRC})
     target_link_libraries(MNNAVX PRIVATE MNNCore)
     target_compile_definitions(MNNAVX PUBLIC MNN_USE_SSE)
     
-    add_library(MNNAVXFMA ${MNN_AVXFMA_SRC})
+    add_library(MNNAVXFMA STATIC ${MNN_AVXFMA_SRC})
     target_link_libraries(MNNAVXFMA PRIVATE MNNCore)
     target_compile_definitions(MNNAVXFMA PUBLIC MNN_USE_SSE)
 
-    add_library(MNNSSE ${MNN_SSE_SRC})
+    add_library(MNNSSE STATIC ${MNN_SSE_SRC})
     target_link_libraries(MNNSSE PRIVATE MNNCore)
     target_compile_definitions(MNNSSE PUBLIC MNN_USE_SSE)
 

@@ -18,6 +18,10 @@ target_include_directories(MNN_Arm82 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/compute/
     ${CMAKE_CURRENT_SOURCE_DIR}/asm/
 )
+target_link_libraries(MNN_Arm82 PRIVATE MNNCore MNNCPU)
+if(ANDROID)
+    target_link_libraries(MNN_Arm82 PUBLIC log)
+endif()
 
 install(TARGETS MNN_Arm82
     EXPORT MNNConfig

@@ -2,12 +2,9 @@
 option(MNN_SUPPORT_BF16 "Enable MNN's bf16 op" OFF)
 
 FILE(GLOB MNN_CPU_SRC ${CMAKE_CURRENT_SOURCE_DIR}/* ${CMAKE_CURRENT_SOURCE_DIR}/compute/*)
-add_library(MNNCPU ${MNN_CPU_SRC})
+add_library(MNNCPU STATIC ${MNN_CPU_SRC})
 
-target_link_libraries(MNNCPU
-PRIVATE
-    MNNCore
-)
+target_link_libraries(MNNCPU PUBLIC MNNCore)
 
 if(MNN_SUPPORT_BF16)
     add_subdirectory(bf16)
@@ -21,18 +18,20 @@ option(MNN_SSE_USE_FP16_INSTEAD "Use fp16 instead of bf16 for x86op" OFF)
 if(MNN_USE_SSE)
     add_subdirectory(x86_x64)
     if(TARGET MNNAVX512)
-        target_link_libraries(MNNCPU PUBLIC MNNAVX512)
+        target_link_libraries(MNNCPU PRIVATE MNNAVX512)
     endif()
     if(TARGET MNNSSE)
-        target_link_libraries(MNNCPU PUBLIC MNNX8664 MNNAVX MNNAVXFMA MNNSSE)
+        target_link_libraries(MNNCPU PRIVATE MNNX8664 MNNAVX MNNAVXFMA MNNSSE)
     endif()
 endif()
 
 # AArch32/64 Assemblies
 add_subdirectory(arm)
-
-if(NOT DEFINED IOS_ARCH)
-    set(IOS_ARCH "")
+if(TARGET MNNARM32)
+    target_link_libraries(MNNCPU PRIVATE MNNARM32)
+endif()
+if(TARGET MNNARM64)
+    target_link_libraries(MNNCPU PRIVATE MNNARM64)
 endif()
 
 # ARM82 Assemblies

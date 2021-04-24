@@ -18,6 +18,7 @@ add_custom_target(MNNMetalLIB
     COMMENT "Generating mnn.metallib"
 )
 add_library(MNNMetal ${MNN_Metal_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/MetalOPRegister.mm)
+target_link_libraries(MNNMetal PUBLIC MNNCore)
 
 # This is just work around some CMake limitations and is really ugly
 # list(APPEND MNN_OBJECTS_TO_LINK ${CMAKE_CURRENT_BINARY_DIR}/mnn.metallib)
@@ -38,6 +39,14 @@ add_custom_target(MNNMetalCodeGen
 )
 add_dependencies(MNNMetal MNNMetalCodeGen)
 add_dependencies(MNNMetal MNNMetalLIB)
+
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/mnn.metallib
+PROPERTIES
+    MACOSX_PACKAGE_LOCATION Resources
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mnn.metallib
+        DESTINATION bin
+)
 
 install(TARGETS MNNMetal
         EXPORT MNNConfig
