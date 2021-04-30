@@ -12,6 +12,17 @@ target_link_libraries(MNN_GL PRIVATE MNNCore)
 if(ANDROID)
     target_link_libraries(MNN_GL PUBLIC GLESv3 EGL)
 endif()
+if(WIN32)
+    target_compile_definitions(MNN_GL
+    PRIVATE
+        NOMINMAX
+    )
+    find_package(unofficial-angle CONFIG REQUIRED)
+    target_link_libraries(MNN_GL
+    PUBLIC
+        unofficial::angle::libEGL unofficial::angle::libGLESv2
+    )
+endif()
 if(MNN_ARM82)
     target_link_libraries(MNN_GL PUBLIC MNN_Arm82)
     if(TARGET MNNARM32) # for MNNPack

@@ -428,7 +428,7 @@ PROPERTIES
 )
 
 if(MSVC)
-  target_link_options(MNN PRIVATE "/IGNORE:4049,4217")
+  add_link_options("/IGNORE:4049,4217")
 endif()
 
 if(APPLE)
