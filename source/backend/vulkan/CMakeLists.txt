@@ -1,9 +1,6 @@
 FILE(GLOB_RECURSE MNN_Vulkan_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*)
 
-
-if(MNN_USE_SYSTEM_LIB)
-    find_package(Vulkan REQUIRED)
-endif()
+find_package(Vulkan REQUIRED)
 if(MNN_SEP_BUILD)
     add_library(MNN_Vulkan ${MNN_Vulkan_SRC})
     target_link_libraries(MNN_Vulkan PRIVATE MNN)

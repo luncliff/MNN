@@ -33,7 +33,7 @@ project(MNN VERSION ${MNN_VERSION_MAJOR}.${MNN_VERSION_MINOR}.${MNN_VERSION_PATC
 # complier options
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # Required for OpenCL/OpenGL/Vulkan CodeGen
 include(FindPythonInterp REQUIRED)
@@ -212,22 +212,15 @@ if(CMAKE_SYSTEM_NAME MATCHES "^Android")
     endif()
 endif()
 
-if(MNN_SEP_BUILD)
-  add_library(MNN SHARED ${CMAKE_CURRENT_LIST_DIR}/cmake/dummy.cpp)
-else()
-  if(MNN_BUILD_SHARED_LIBS)
-    add_library(MNN SHARED ${CMAKE_CURRENT_LIST_DIR}/cmake/dummy.cpp)
-    if(WIN32)
-      add_compile_definitions(BUILDING_MNN_DLL USING_MNN_DLL)
-      target_compile_definitions(MNN
-      PUBLIC
-        USING_MNN_DLL
-      PRIVATE
-        BUILDING_MNN_DLL
-      )
-    endif()
-  else()
-    add_library(MNN STATIC ${CMAKE_CURRENT_LIST_DIR}/cmake/dummy.cpp)
+add_library(MNN INTERFACE)
+
+if(MNN_BUILD_SHARED_LIBS)
+  if(WIN32)
+    add_compile_definitions(BUILDING_MNN_DLL USING_MNN_DLL)
+    target_compile_definitions(MNN
+    INTERFACE
+      USING_MNN_DLL
+    )
   endif()
 endif()
 
@@ -305,7 +298,7 @@ if(NOT APPLE)
   if(MNN_OPENMP)
       find_package(Threads REQUIRED)
       find_package(OpenMP REQUIRED)
-      target_link_libraries(MNN PUBLIC Threads::Threads OpenMP::OpenMP_CXX)
+      target_link_libraries(MNN INTERFACE Threads::Threads OpenMP::OpenMP_CXX)
   endif()
 endif()
 
@@ -366,24 +359,24 @@ endif()
 if(MNN_OPENCL)
   find_package(OpenCL REQUIRED)
   add_subdirectory(source/backend/opencl) # MNN_CL
-  target_link_libraries(MNN PUBLIC MNN_CL)
+  target_link_libraries(MNN INTERFACE MNN_CL)
 endif()
 
 # OpenGL
 if(MNN_OPENGL)
   add_subdirectory(source/backend/opengl) # MNN_GL
-  target_link_libraries(MNN PUBLIC MNN_GL)
+  target_link_libraries(MNN INTERFACE MNN_GL)
 endif()
 
 # CUDA
 if(MNN_CUDA)
   add_subdirectory(source/backend/cuda) # MNN_CUDA
-  target_link_libraries(MNN PUBLIC MNN_CUDA)
+  target_link_libraries(MNN INTERFACE MNN_CUDA)
 endif()
 
 # Express
 add_subdirectory(express) # MNN_Express
-target_link_libraries(MNN PUBLIC MNN_Express)
+target_link_libraries(MNN INTERFACE MNN_Express)
 
 find_package(RapidJSON CONFIG REQUIRED)
 # include_directories(
@@ -409,20 +402,20 @@ endif()
 if(FALSE) # MNN_NPU
     add_subdirectory(source/backend/hiai)
     if(MNN_SEP_BUILD)
-        target_link_libraries(MNN PUBLIC MNN_NPU)
+        target_link_libraries(MNN INTERFACE MNN_NPU)
     else()
         # todo
         list(APPEND MNN_EXTRA_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/source/backend/hiai/3rdParty/${ANDROID_ABI}/libhiai.so)
         list(APPEND MNN_EXTRA_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/source/backend/hiai/3rdParty/${ANDROID_ABI}/libhiai_ir_build.so)
         list(APPEND MNN_EXTRA_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/source/backend/hiai/3rdParty/${ANDROID_ABI}/libhiai_ir.so)
-        target_link_libraries(MNN PUBLIC ${MNN_EXTRA_DEPENDS})
+        target_link_libraries(MNN INTERFACE ${MNN_EXTRA_DEPENDS})
     endif()
 endif()
 
 # TensorRT
 if(MNN_TENSORRT)
   add_subdirectory(source/backend/tensorrt) # MNN_TRT
-  target_link_libraries(MNN PUBLIC MNN_TRT)
+  target_link_libraries(MNN INTERFACE MNN_TRT)
 endif()
 
 target_sources(MNN PRIVATE ${MNN_PUB_HDRS} ${MNN_EXPR_PUB_HDRS})
@@ -449,28 +442,28 @@ if(APPLE)
     endif()
     if(MNN_METAL)
       find_library(FOUNDATION Foundation REQUIRED)
-      target_link_libraries(MNN PUBLIC ${FOUNDATION})
+      target_link_libraries(MNN INTERFACE ${FOUNDATION})
       find_library(METAL Metal REQUIRED)
-      target_link_libraries(MNN PUBLIC ${METAL})
+      target_link_libraries(MNN INTERFACE ${METAL})
       find_library(GRAPHIC CoreGraphics)
-      target_link_libraries(MNN PUBLIC ${GRAPHIC})
+      target_link_libraries(MNN INTERFACE ${GRAPHIC})
     endif()
 endif()
-target_link_libraries(MNN PUBLIC MNNCore MNNCPU)
+target_link_libraries(MNN INTERFACE MNNCore MNNCPU)
 
 if(CMAKE_SYSTEM_NAME MATCHES "^Linux")
   # Using -pthread, needed by thread-safe implemention of glibc, is better than only using -lpthread
   # https://stackoverflow.com/questions/23250863/difference-between-pthread-and-lpthread-while-compiling
-  target_link_libraries(MNN PUBLIC -pthread dl)
+  target_link_libraries(MNN INTERFACE -pthread dl)
 elseif(CMAKE_SYSTEM_NAME MATCHES "^Android")
-  target_link_libraries(MNN PUBLIC log m)
+  target_link_libraries(MNN INTERFACE log m)
 else()
   # ...
 endif()
 
-if(MNN_BUILD_CONVERTER)
-  add_subdirectory(tools/converter)
-endif()
+# if(MNN_BUILD_CONVERTER)
+#   add_subdirectory(tools/converter)
+# endif()
 # if(MNN_BUILD_DEMO)
 #   add_subdirectory(demo/exec/CMakeLists.txt)
 # endif()
@@ -513,7 +506,8 @@ install(TARGETS MNN MNNCore
     FRAMEWORK DESTINATION Library/Frameworks/
 )
 install(EXPORT MNNConfig
-    DESTINATION lib/cmake/MNN
+        NAMESPACE unofficial::
+        DESTINATION lib/cmake/MNN
 )
 
 if(APPLE)
