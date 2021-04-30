@@ -17,7 +17,7 @@
 #define CONTEXT_FREE_API
 #include <assert.h>
 #include <stdlib.h>
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(_WIN32)
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <GLES3/gl31.h>
