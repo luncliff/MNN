@@ -4,7 +4,7 @@ option(MNN_SUPPORT_BF16 "Enable MNN's bf16 op" OFF)
 FILE(GLOB MNN_CPU_SRC ${CMAKE_CURRENT_SOURCE_DIR}/* ${CMAKE_CURRENT_SOURCE_DIR}/compute/*)
 add_library(MNNCPU STATIC ${MNN_CPU_SRC})
 
-target_link_libraries(MNNCPU PUBLIC MNNCore)
+target_link_libraries(MNNCPU PRIVATE MNNCore)
 
 if(MNN_SUPPORT_BF16)
     add_subdirectory(bf16)

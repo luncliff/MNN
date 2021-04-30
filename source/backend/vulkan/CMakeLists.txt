@@ -34,6 +34,10 @@ PRIVATE
 
 if(CMAKE_SYSTEM_NAME MATCHES "^Android")
   target_compile_definitions(MNN_Vulkan PUBLIC VK_USE_PLATFORM_ANDROID_KHR)
+  target_link_libraries(MNN_Vulkan
+  PUBLIC
+    ${Vulkan_LIBRARY}
+  )
 endif()
 install(TARGETS MNN_Vulkan
         EXPORT MNNConfig
