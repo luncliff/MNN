@@ -105,7 +105,7 @@ ErrorCode GLConvolutionDepthwise::onResize(const std::vector<Tensor *> &inputs, 
         glUniform2i(6, sx, sy);
         glUniform2i(7, dx, dy);
     };
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLConvolutionDepthwise::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -154,7 +154,7 @@ ErrorCode GLConvolutionDepthwise::onExecute(const std::vector<Tensor *> &inputs,
 
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 GLCreatorRegister<TypedCreator<GLConvolutionDepthwise>> __depthwise_conv_op(OpType_ConvolutionDepthwise);
 } // namespace OpenGL

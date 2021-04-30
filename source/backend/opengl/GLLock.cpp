@@ -8,9 +8,11 @@
 
 #include "backend/opengl/GLLock.hpp"
 #include <assert.h>
+#if defined(__ANDROID__)
 #include <pthread.h>
 namespace MNN {
 namespace OpenGL {
+
 GLLock::GLLock() {
     pthread_mutex_t* m = new pthread_mutex_t;
     pthread_mutex_init(m, NULL);
@@ -35,3 +37,37 @@ void GLLock::unlock() {
 }
 } // namespace OpenGL
 } // namespace MNN
+
+#elif defined(_WIN32)
+#include <Windows.h>
+
+namespace MNN {
+namespace OpenGL {
+
+GLLock::GLLock() {
+    CRITICAL_SECTION* m = new CRITICAL_SECTION;
+    InitializeCriticalSectionEx(m, 0x0400, 0);
+    mData = m;
+}
+
+GLLock::~GLLock() {
+    assert(NULL != mData);
+    CRITICAL_SECTION* m = reinterpret_cast<CRITICAL_SECTION*>(mData);
+    DeleteCriticalSection(m);
+    delete m;
+}
+
+void GLLock::lock() {
+    assert(NULL != mData);
+    CRITICAL_SECTION* m = reinterpret_cast<CRITICAL_SECTION*>(mData);
+    EnterCriticalSection(m);
+}
+
+void GLLock::unlock() {
+    assert(NULL != mData);
+    CRITICAL_SECTION* m = reinterpret_cast<CRITICAL_SECTION*>(mData);
+    LeaveCriticalSection(m);
+}
+} // namespace OpenGL
+} // namespace MNN
+#endif

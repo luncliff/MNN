@@ -26,7 +26,7 @@ GLRoiPooling::~GLRoiPooling() {
 
 ErrorCode GLRoiPooling::onResize(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLRoiPooling::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -66,7 +66,7 @@ ErrorCode GLRoiPooling::onExecute(const std::vector<Tensor *> &inputs, const std
 
     OPENGL_CHECK_ERROR;
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 GLCreatorRegister<TypedCreator<GLRoiPooling>> __roipooling_op(OpType_ROIPooling);

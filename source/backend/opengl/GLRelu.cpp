@@ -51,7 +51,7 @@ ErrorCode GLRelu::onResize(const std::vector<Tensor *> &inputs, const std::vecto
         MNN_PRINT("not support !!!");
         return NOT_SUPPORT;
     }
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLRelu::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -92,7 +92,7 @@ ErrorCode GLRelu::onExecute(const std::vector<Tensor *> &inputs, const std::vect
         ((GLBackend *)backend())->compute(UP_DIV(iw, mLocalSize[0]), UP_DIV(ih, mLocalSize[1]), UP_DIV(ic_4, mLocalSize[2]));
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 GLCreatorRegister<TypedCreator<GLRelu>> __relu_op(OpType_ReLU);
 GLCreatorRegister<TypedCreator<GLRelu>> __prelu_op(OpType_PReLU);

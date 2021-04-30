@@ -39,7 +39,7 @@ ErrorCode GLPermute::onResize(const std::vector<Tensor *> &inputs, const std::ve
     mSrcProgram = ((GLBackend *)backend())->getProgram("src", glsl_image_to_nchw_buffer_glsl, prefix);
     mDstProgram = ((GLBackend *)backend())->getProgram("dst", glsl_nchw_buffer_to_image_glsl, prefix);
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLPermute::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -94,7 +94,7 @@ ErrorCode GLPermute::onExecute(const std::vector<Tensor *> &inputs, const std::v
         OPENGL_CHECK_ERROR;
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 GLCreatorRegister<TypedCreator<GLPermute>> __permute_op(OpType_Permute);
 } // namespace OpenGL

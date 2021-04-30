@@ -37,7 +37,7 @@ ErrorCode GLReshape::onResize(const std::vector<Tensor *> &inputs, const std::ve
         mDstProgram = ((GLBackend *)backend())->getProgram("dst", glsl_nhwc_buffer_to_image_glsl, prefix);
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLReshape::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -110,7 +110,7 @@ ErrorCode GLReshape::onExecute(const std::vector<Tensor *> &inputs, const std::v
         }
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 class ReshapeCreator : public GLBackend::Creator {

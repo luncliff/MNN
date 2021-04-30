@@ -34,7 +34,7 @@ ErrorCode GLPool::onResize(const std::vector<Tensor *> &inputs, const std::vecto
             glUniform2i(4, 0, 0);
         };
     }
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLPool::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -59,7 +59,7 @@ ErrorCode GLPool::onExecute(const std::vector<Tensor *> &inputs, const std::vect
 
     OPENGL_CHECK_ERROR;
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 GLPool::~GLPool() {

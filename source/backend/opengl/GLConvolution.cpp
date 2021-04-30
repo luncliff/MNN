@@ -43,12 +43,12 @@ ErrorCode GPUConvolution::onResize(const std::vector<Tensor *> &inputs, const st
 
         mPadX = (pad_needed_width > 0 ?  pad_needed_width : 0) / 2;
         mPadY = (pad_needed_height > 0 ?  pad_needed_height : 0) / 2;
-        return NO_ERROR;
+        return ErrorCode{};
     }
     mPadX = mCommon->padX();
     mPadY = mCommon->padY();
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 GLConvolution::~GLConvolution() {
@@ -154,7 +154,7 @@ ErrorCode GLConvolution::onResize(const std::vector<Tensor *> &inputs, const std
         mProgram = extra->getProgram("convolution", glsl_convolution_glsl, prefix);
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 
@@ -207,7 +207,7 @@ ErrorCode GLConvolution::onExecute(const std::vector<Tensor *> &inputs, const st
         OPENGL_CHECK_ERROR;
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 

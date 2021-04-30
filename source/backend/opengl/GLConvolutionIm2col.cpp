@@ -156,7 +156,7 @@ ErrorCode GLConvolutionIm2col::onResize(const std::vector<Tensor *> &inputs, con
         };
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 ErrorCode GLConvolutionIm2col::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
 
@@ -242,7 +242,7 @@ ErrorCode GLConvolutionIm2col::onExecute(const std::vector<Tensor *> &inputs, co
         OPENGL_CHECK_ERROR;
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 } // namespace OpenGL

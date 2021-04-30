@@ -41,7 +41,7 @@ ErrorCode GLBinary::onResize(const std::vector<Tensor *> &inputs, const std::vec
     }else{
         MNN_PRINT("Not Supported Binary Operation: %d\n", mType);
     }
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLBinary::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -92,7 +92,7 @@ ErrorCode GLBinary::onExecute(const std::vector<Tensor *> &inputs, const std::ve
     OPENGL_CHECK_ERROR;
     ((GLBackend *)backend())->compute(UP_DIV(iw, mLocalSize[0]), UP_DIV(ih, mLocalSize[1]), UP_DIV(ic_4, mLocalSize[2]));
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 class BinaryCreator : public GLBackend::Creator {

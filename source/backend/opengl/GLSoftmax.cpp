@@ -42,7 +42,7 @@ ErrorCode GLSoftmax::onResize(const std::vector<Tensor *> &inputs, const std::ve
     } else {
         MNN_ASSERT(false);
     }
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLSoftmax::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -89,7 +89,7 @@ ErrorCode GLSoftmax::onExecute(const std::vector<Tensor *> &inputs, const std::v
         MNN_ASSERT(false);
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 class SoftmaxCreator : public GLBackend::Creator {

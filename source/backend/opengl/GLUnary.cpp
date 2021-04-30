@@ -33,7 +33,7 @@ ErrorCode GLUnary::onResize(const std::vector<Tensor *> &inputs, const std::vect
     }else{
         MNN_PRINT("Not Supported Unary Operation: %d\n", mType);
     }
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLUnary::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -63,7 +63,7 @@ ErrorCode GLUnary::onExecute(const std::vector<Tensor *> &inputs, const std::vec
     OPENGL_CHECK_ERROR;
     ((GLBackend *)backend())->compute(UP_DIV(iw, mLocalSize[0]), UP_DIV(ih, mLocalSize[1]), UP_DIV(ic_4, mLocalSize[2]));
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 class UnaryCreator : public GLBackend::Creator {

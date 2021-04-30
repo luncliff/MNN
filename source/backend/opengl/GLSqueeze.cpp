@@ -30,7 +30,7 @@ ErrorCode GLSqueeze::onResize(const std::vector<Tensor *> &inputs, const std::ve
     setLocalSize(prefix, mLocalSize, 8, 8, 1);
     mProgram = ((GLBackend *)backend())->getProgram("suqeeze", glsl_image_copy_glsl, prefix);
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLSqueeze::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -58,7 +58,7 @@ ErrorCode GLSqueeze::onExecute(const std::vector<Tensor *> &inputs, const std::v
     OPENGL_CHECK_ERROR;
     ((GLBackend *)backend())->compute(UP_DIV(iw, mLocalSize[0]), UP_DIV(ih, mLocalSize[1]), UP_DIV(ic_4, mLocalSize[2]));
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 class SqueezeCreator : public GLBackend::Creator {
 public:

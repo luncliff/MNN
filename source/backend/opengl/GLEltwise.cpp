@@ -77,7 +77,7 @@ ErrorCode GLEltwise::onExecute(const std::vector<Tensor *> &inputs, const std::v
     ((GLBackend *)backend())->compute(UP_DIV(outputTensor->width(), 2), UP_DIV(outputTensor->height(), 2), UP_DIV(depthQuad, 16));
     OPENGL_CHECK_ERROR;
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 GLCreatorRegister<TypedCreator<GLEltwise>> __eltwise_op(OpType_Eltwise);
 } // namespace OpenGL

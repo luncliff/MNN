@@ -25,7 +25,7 @@ ErrorCode GLConverter::onResize(const std::vector<Tensor *> &inputs, const std::
     std::vector<std::string> prefix;
     setLocalSize(prefix, mLocalSize, 8, 8, 1);
     mProgram = ((GLBackend *)backend())->getProgram("convert", glsl_converter_glsl, prefix);
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 ErrorCode GLConverter::onExecute(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -56,7 +56,7 @@ ErrorCode GLConverter::onExecute(const std::vector<Tensor *> &inputs, const std:
 
     ((GLBackend *)backend())->compute(UP_DIV(iw, mLocalSize[0]), UP_DIV(ih, mLocalSize[1]),
                       UP_DIV(ic_4, mLocalSize[2]));
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 

@@ -63,7 +63,7 @@ ErrorCode GLConcat::onExecute(const std::vector<Tensor *> &inputs, const std::ve
         }
     }
 
-    return NO_ERROR;
+    return ErrorCode{};
 }
 
 class ConcatCreator : public GLBackend::Creator {
