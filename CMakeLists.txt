@@ -298,7 +298,7 @@ if(NOT APPLE)
   if(MNN_OPENMP)
       find_package(Threads REQUIRED)
       find_package(OpenMP REQUIRED)
-      target_link_libraries(MNN INTERFACE Threads::Threads OpenMP::OpenMP_CXX)
+      target_link_libraries(MNNCore PUBLIC Threads::Threads OpenMP::OpenMP_CXX)
   endif()
 endif()
 
@@ -321,13 +321,15 @@ endif()
 
 # Metal
 if(MNN_METAL AND APPLE)
-    add_compile_definitions(MNN_METAL_ENABLED=1)
+    target_compile_definitions(MNNCore PUBLIC MNN_METAL_ENABLED=1)
     add_subdirectory(source/backend/metal) # MNNMetal
+    target_link_libraries(MNN INTERFACE MNNMetal)
 endif()
 
 # Vulkan
 if(MNN_VULKAN)
     add_subdirectory(source/backend/vulkan) # MNN_Vulkan
+    target_link_libraries(MNN INTERFACE MNN_Vulkan)
 endif()
 
 # oneDNN
